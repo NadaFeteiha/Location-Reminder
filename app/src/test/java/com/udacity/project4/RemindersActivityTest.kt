@@ -2,7 +2,6 @@ package com.udacity.project4
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
-import androidx.test.espresso.IdlingRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.udacity.project4.locationreminders.data.ReminderDataSource
@@ -11,7 +10,6 @@ import com.udacity.project4.locationreminders.data.local.RemindersLocalRepositor
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.koin.androidx.viewmodel.dsl.viewModel

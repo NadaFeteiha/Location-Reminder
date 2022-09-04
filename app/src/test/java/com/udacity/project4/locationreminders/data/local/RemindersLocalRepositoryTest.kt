@@ -16,7 +16,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.collection.IsEmptyCollection.empty
 import org.junit.runner.RunWith
 
 
