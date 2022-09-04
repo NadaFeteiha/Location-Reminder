@@ -14,6 +14,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import com.udacity.project4.MainCoroutineRule
 import com.udacity.project4.getOrAwaitValue
+import com.udacity.project4.locationreminders.data.dto.ReminderDTO
+import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import kotlinx.coroutines.test.pauseDispatcher
 import kotlinx.coroutines.test.resumeDispatcher
 import org.junit.Before
@@ -45,6 +47,15 @@ class RemindersListViewModelTest {
         )
     }
 
+    private fun getReminder() = ReminderDTO(
+        title = "title",
+        description = "description",
+        location = "location",
+        latitude = 23.80,
+        longitude = 45.36
+    )
+
+
     @Test
     fun loadRemindersWhenRemindersAreUnavailable_returnError() = runBlockingTest {
         fakeDataSource.setShouldReturnError(true)
@@ -60,5 +71,45 @@ class RemindersListViewModelTest {
         fakeDataSource.deleteAllReminders()
         reminderListViewModel.loadReminders()
         assertThat(reminderListViewModel.showNoData.getOrAwaitValue(), `is`(true))
+    }
+
+    @Test
+    fun shouldReturnError() {
+        //Given: error in fake data
+        fakeDataSource.setShouldReturnError(true)
+        //WHEN: try to load data
+        reminderListViewModel.loadReminders()
+        //THEN: error will appear
+        assertThat(
+            reminderListViewModel
+                .showSnackBar
+                .getOrAwaitValue(),
+            `is`("Reminders not found")
+        )
+    }
+
+    @Test
+    fun check_loading() = mainCoroutineRule.runBlockingTest {
+        val result = getReminder()
+        fakeDataSource.saveReminder(result)
+        reminderListViewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
+
+        mainCoroutineRule.pauseDispatcher()
+        reminderListViewModel.loadReminders()
+
+        val loadingBeforeCoroutine = reminderListViewModel.showLoading.getOrAwaitValue()
+        mainCoroutineRule.resumeDispatcher()
+
+        val loadingAfterCoroutine = reminderListViewModel.showLoading.getOrAwaitValue()
+        var viewModelReminder: ReminderDTO? = null
+
+        reminderListViewModel.remindersList.getOrAwaitValue()[0].apply {
+            viewModelReminder = ReminderDTO(title, description, location, latitude, longitude, id)
+        }
+
+        //Then
+        assertThat(loadingBeforeCoroutine, `is`(true))
+        assertThat(loadingAfterCoroutine, `is`(false))
+        assertThat(viewModelReminder, `is`(result))
     }
 }
