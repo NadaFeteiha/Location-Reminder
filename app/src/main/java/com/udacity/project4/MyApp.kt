@@ -26,6 +26,7 @@ class MyApp : Application() {
                     get(),
                     get() as ReminderDataSource
                 )
+
             }
             //Declare singleton definitions to be later injected using by inject()
             single {
@@ -34,6 +35,7 @@ class MyApp : Application() {
                     get(),
                     get() as ReminderDataSource
                 )
+
             }
             single { RemindersLocalRepository(get()) as ReminderDataSource }
             single { LocalDB.createRemindersDao(this@MyApp) }

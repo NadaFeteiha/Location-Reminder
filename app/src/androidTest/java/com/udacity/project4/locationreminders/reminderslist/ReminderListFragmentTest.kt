@@ -8,7 +8,10 @@ import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
+import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.IdlingRegistry
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.udacity.project4.locationreminders.data.ReminderDataSource
@@ -96,8 +99,8 @@ class ReminderListFragmentTest {
         }
 
         // WHEN: the user click  on the button add
-//        onView(withId(R.id.addReminderFAB))
-//            .perform(click())
+        onView(withId(R.id.addReminderFAB))
+            .perform(click())
 
         // THEN:  should open Save Reminder fragment to the user
         verify(navController).navigate(

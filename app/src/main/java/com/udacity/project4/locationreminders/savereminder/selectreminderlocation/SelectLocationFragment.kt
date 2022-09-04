@@ -67,11 +67,19 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             locationPermissionGranted = true
+
             showUserLocation()
-            setMapStyle(map)
-            setOnMapClick(map)
-            setPoiClick(map)
-            onLocationSelected()
+            Toast.makeText(context, R.string.permission_granted, Toast.LENGTH_LONG).show()
+        } else if (ActivityCompat.shouldShowRequestPermissionRationale(
+                requireActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        ) {
+            requestPermissions(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_LOCATION_PERMISSION
+            )
+
         } else {
             requestPermissions(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
@@ -99,7 +107,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 _viewModel.longitude.value = latLng.longitude
                 _viewModel.selectedPOI.value = pointOfInterest
                 _viewModel.reminderSelectedLocationStr.value = pointOfInterest.name
-                _viewModel.navigationCommand.value = NavigationCommand.Back
+//                _viewModel.navigationCommand.value = NavigationCommand.Back
+                _viewModel.navigationCommand.value =
+                    NavigationCommand.To(SelectLocationFragmentDirections.actionSelectLocationFragmentToSaveReminderFragment())
+
             } else {
                 Toast.makeText(requireContext(), R.string.select_poi, Toast.LENGTH_LONG).show()
             }
@@ -132,9 +143,21 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+
         map.mapType = GoogleMap.MAP_TYPE_NORMAL
         map.uiSettings.isZoomControlsEnabled = true
+
+        showUserLocation()
+
         checkLocationPermission()
+
+        setPoiClick(map)
+
+        setOnMapClick(map)
+
+        setMapStyle(map)
+
+        onLocationSelected()
     }
 
     private fun setMapStyle(map: GoogleMap) {
@@ -167,7 +190,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun setOnMapClick(map: GoogleMap) {
-        map.setOnMapLongClickListener { latLng ->
+        map.setOnMapClickListener { latLng ->
             map.clear()
             val snippet = String.format(
                 Locale.getDefault(),
@@ -194,13 +217,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                locationPermissionGranted = true
                 checkLocationPermission()
-                Log.i("onRequestPermissions", "Blue dot fix called!")
             } else {
                 _viewModel.showErrorMessage.postValue(getString(R.string.permission_denied_explanation))
             }
-            setupMap()
         }
     }
 }
