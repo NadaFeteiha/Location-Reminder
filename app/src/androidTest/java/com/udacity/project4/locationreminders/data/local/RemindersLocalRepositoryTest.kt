@@ -3,10 +3,13 @@ package com.udacity.project4.locationreminders.data.local
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.espresso.IdlingRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
+import com.udacity.project4.utils.DataBindingIdlingResource
+import com.udacity.project4.utils.EspressoIdlingResource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -30,6 +33,14 @@ class RemindersLocalRepositoryTest {
     private lateinit var remindersLocalRepository: RemindersLocalRepository
     private lateinit var database: RemindersDatabase
 
+    private val dataBindingIdlingResource = DataBindingIdlingResource()
+
+    @Before
+    fun registerIdlingResource() {
+        IdlingRegistry.getInstance().register(EspressoIdlingResource.countingIdlingResource)
+        IdlingRegistry.getInstance().register(dataBindingIdlingResource)
+    }
+
     @Before
     fun initRepository() {
         database = Room.inMemoryDatabaseBuilder(
@@ -50,12 +61,6 @@ class RemindersLocalRepositoryTest {
         24.45,
         53.67
     )
-
-
-    @After
-    fun closeDataBase() {
-        database.close()
-    }
 
     @Test
     fun getReminders() = runBlockingTest {
@@ -89,12 +94,36 @@ class RemindersLocalRepositoryTest {
 
     @Test
     fun deleteAllReminders() = runBlockingTest {
+        //GIVEN: a reminder saved in Database
         val reminderFake = setFakeData(1)
         remindersLocalRepository.saveReminder(reminderFake)
+        //WHEN: delete all the reminders
         remindersLocalRepository.deleteAllReminders()
         val result = remindersLocalRepository.getReminders()
-        assertThat(result is Result.Error, `is`(true))
+        //THEN: the delete will work correctly and size of it will be Zero.
+        result as Result.Success
+        assertThat(result.data.size, `is`(0))
+    }
+
+    @Test
+    fun getReminder_returnsError() = runBlockingTest {
+        //GIVEN: delete all reminders
+        remindersLocalRepository.deleteAllReminders()
+        //WHEN: try to get reminders.
+        val result = remindersLocalRepository.getReminders()
         result as Result.Error
+        //THEN: got error result massed
         assertThat(result.message, `is`("Reminder not found!"))
+    }
+
+    @After
+    fun unregisterIdlingResource() {
+        IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
+        IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
+    }
+
+    @After
+    fun closeDataBase() {
+        database.close()
     }
 }

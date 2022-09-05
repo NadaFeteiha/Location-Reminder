@@ -89,18 +89,24 @@ dependencies {
 //    implementation "org.koin:koin-android:$koinVersion"
 //    implementation "org.koin:koin-androidx-viewmodel:$koinVersion"
     //Koin
-    def koin_version = "3.1.2"
-    implementation "io.insert-koin:koin-android:3.2.0"
-    implementation "io.insert-koin:koin-android-compat:3.2.0"
-    implementation "io.insert-koin:koin-androidx-workmanager:3.2.0"
-    implementation "io.insert-koin:koin-androidx-navigation:3.2.0"
-    implementation "io.insert-koin:koin-android:3.2.0"
-    implementation "io.insert-koin:koin-core:3.2.0"
+//    def koin_version = "3.1.2"
+//    implementation "io.insert-koin:koin-android:3.2.0"
+//    implementation "io.insert-koin:koin-android-compat:3.2.0"
+//    implementation "io.insert-koin:koin-androidx-workmanager:3.2.0"
+//    implementation "io.insert-koin:koin-androidx-navigation:3.2.0"
+//    implementation "io.insert-koin:koin-android:3.2.0"
+//    implementation "io.insert-koin:koin-core:3.2.0"
 
-    implementation "io.insert-koin:koin-test:$koin_version"
-    implementation "io.insert-koin:koin-android:3.2.0"
-    testImplementation "io.insert-koin:koin-test:3.2.0"
-    testImplementation "io.insert-koin:koin-test-junit4:3.2.0"
+//    implementation "io.insert-koin:koin-test:$koin_version"
+//    implementation "io.insert-koin:koin-android:3.2.0"
+//    testImplementation "io.insert-koin:koin-test:3.2.0"
+//    testImplementation "io.insert-koin:koin-test-junit4:3.2.0"
+
+//    implementation "org.koin:koin-android:2.2.0"
+    implementation "org.koin:koin-android:2.2.0"
+    implementation "org.koin:koin-androidx-viewmodel:2.2.0"
+    androidTestImplementation("org.koin:koin-test:2.2.0") { exclude group: 'org.mockito' }
+    testImplementation('org.koin:koin-test:2.2.0') { exclude group: 'org.mockito' }
 
     // Dependencies for local unit tests
     //  testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
@@ -137,7 +143,6 @@ dependencies {
     implementation "androidx.fragment:fragment-ktx:$fragmentVersion"
     androidTestImplementation "org.mockito:mockito-core:$mockitoVersion"
     androidTestImplementation "com.linkedin.dexmaker:dexmaker-mockito:$dexMakerVersion"
-//    androidTestImplementation("org.koin:koin-test:$koinVersion") { exclude group: 'org.mockito' }
 
     //Maps & Geofencing
     implementation "com.google.android.gms:play-services-location:20.0.0"

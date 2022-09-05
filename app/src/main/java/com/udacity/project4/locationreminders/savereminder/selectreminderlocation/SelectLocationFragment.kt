@@ -12,6 +12,8 @@ import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.content.PermissionChecker
+import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -34,6 +36,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
     private lateinit var pointOfInterest: PointOfInterest
+    private lateinit var pointONMap: Marker
     private var locationPermissionGranted = false
     lateinit var mFusedLocationClient: FusedLocationProviderClient
     private val TAG = SelectLocationFragment::class.java.simpleName
@@ -69,6 +72,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             locationPermissionGranted = true
 
             showUserLocation()
+
             Toast.makeText(context, R.string.permission_granted, Toast.LENGTH_LONG).show()
         } else if (ActivityCompat.shouldShowRequestPermissionRationale(
                 requireActivity(),
@@ -91,6 +95,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     private fun showUserLocation() {
         mFusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            map.isMyLocationEnabled = true
             if (location != null) {
                 val userLatLng = LatLng(location.latitude, location.longitude)
                 val zoom = 20f
@@ -107,10 +112,14 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 _viewModel.longitude.value = latLng.longitude
                 _viewModel.selectedPOI.value = pointOfInterest
                 _viewModel.reminderSelectedLocationStr.value = pointOfInterest.name
-//                _viewModel.navigationCommand.value = NavigationCommand.Back
                 _viewModel.navigationCommand.value =
                     NavigationCommand.To(SelectLocationFragmentDirections.actionSelectLocationFragmentToSaveReminderFragment())
-
+            } else if (this::pointONMap.isInitialized) {
+                _viewModel.latitude.value = pointONMap.position.latitude
+                _viewModel.longitude.value = pointONMap.position.longitude
+                _viewModel.reminderSelectedLocationStr.value = pointONMap.title
+                _viewModel.navigationCommand.value =
+                    NavigationCommand.To(SelectLocationFragmentDirections.actionSelectLocationFragmentToSaveReminderFragment())
             } else {
                 Toast.makeText(requireContext(), R.string.select_poi, Toast.LENGTH_LONG).show()
             }
@@ -190,7 +199,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun setOnMapClick(map: GoogleMap) {
-        map.setOnMapClickListener { latLng ->
+        map.setOnMapLongClickListener { latLng ->
             map.clear()
             val snippet = String.format(
                 Locale.getDefault(),
@@ -205,6 +214,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     .snippet(snippet)
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
             )
+            if (marker != null) {
+                pointONMap = marker
+            }
             marker?.showInfoWindow()
         }
     }
@@ -217,7 +229,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                checkLocationPermission()
+                showUserLocation()
             } else {
                 _viewModel.showErrorMessage.postValue(getString(R.string.permission_denied_explanation))
             }

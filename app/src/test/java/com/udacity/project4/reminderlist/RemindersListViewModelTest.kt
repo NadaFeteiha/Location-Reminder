@@ -55,7 +55,6 @@ class RemindersListViewModelTest {
         longitude = 45.36
     )
 
-
     @Test
     fun loadRemindersWhenRemindersAreUnavailable_returnError() = runBlockingTest {
         fakeDataSource.setShouldReturnError(true)
