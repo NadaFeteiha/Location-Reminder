@@ -109,7 +109,6 @@ class SaveReminderFragment : BaseFragment() {
                     checkPermissions()
                 }
             }
-//            checkPermissions()
         }
     }
 

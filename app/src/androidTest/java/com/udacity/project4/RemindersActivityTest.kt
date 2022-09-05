@@ -7,8 +7,10 @@ import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions.*
+import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.withDecorView
+import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
@@ -23,6 +25,7 @@ import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.DataBindingIdlingResource
 import com.udacity.project4.utils.EspressoIdlingResource
 import com.udacity.project4.utils.monitorActivity
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.`is`
@@ -50,7 +53,6 @@ class RemindersActivityTest : AutoCloseKoinTest() {
 
     @get:Rule
     val activityRule = ActivityTestRule(RemindersActivity::class.java)
-
 
     @Before
     fun init() {
@@ -107,27 +109,7 @@ class RemindersActivityTest : AutoCloseKoinTest() {
     }
 
     @Test
-    fun createReminder_checkReminderList(): Unit = runBlocking {
-        //GIVEN: user saved reminder.
-        val reminder = getReminder(1)
-        repository.saveReminder(reminder)
-
-        //WHEN: activity is launched
-        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
-        dataBindingIdlingResource.monitorActivity(activityScenario)
-
-        //THEN: checks that onView items match reminder instance
-        onView(withText(reminder.title)).check(matches(isDisplayed()))
-        onView(withText(reminder.description)).check(matches(isDisplayed()))
-        onView(withText(reminder.location)).check(matches(isDisplayed()))
-        runBlocking {
-            delay(2000)
-        }
-    }
-
-
-    @Test
-    fun showErrorNoTitle_SnackMessage() {
+    fun snackBar_EnterTitle() {
         //GIVEN: user open the activity and select place to save.
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
         dataBindingIdlingResource.monitorActivity(activityScenario)
@@ -140,30 +122,44 @@ class RemindersActivityTest : AutoCloseKoinTest() {
         val snackBar = appContext.getString(R.string.err_enter_title)
         onView(withText(snackBar)).check(matches(isDisplayed()))
         activityScenario.close()
-
-        runBlocking {
-            delay(2000)
-        }
     }
 
-
+    @ExperimentalCoroutinesApi
     @Test
-    fun showToast_successfullySaved(): Unit = runBlocking {
+    fun showToast_successfullySaved() = runBlocking {
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
         dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        var activity: Activity? = null
+        activityScenario.onActivity {
+            activity = it
+        }
 
         //Given: user try to save a place reminder.
         val reminder = getReminder(2)
 
-        //WHEN: click FAB button and show toast message
+        //WHEN: open the fragment and enter all details
         onView(withId(R.id.addReminderFAB)).perform(click())
-        onView(withId(R.id.reminderTitle)).perform(typeText(reminder.title))
-        onView(withId(R.id.reminderDescription)).perform(typeText(reminder.description))
         onView(withId(R.id.selectLocation)).perform(longClick())
         onView(withId(R.id.map)).perform(longClick())
+        onView(withId(R.id.save_button)).perform(click())
+        onView(withId(R.id.reminderTitle)).perform(typeText(reminder.title))
+        onView(withId(R.id.reminderDescription)).perform(typeText(reminder.description))
+
+        // this to close soft keyboard.
+        onView(withId(R.id.reminderDescription)).perform(closeSoftKeyboard())
         onView(withId(R.id.saveReminder)).perform(click())
-        onView(withText(R.string.geofences_added)).inRoot(withDecorView(not(`is`(getActivity(activityScenario)?.window?.decorView))))
-            .check(matches(isDisplayed()))
+
+        runBlocking {
+            delay(2000)
+        }
+        //THEN: Toast will appear that added correctly.
+        onView(ViewMatchers.withText(R.string.reminder_saved)).inRoot(
+            withDecorView(
+                not(activity?.window?.decorView)
+            )
+        ).check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+
         activityScenario.close()
     }
 

@@ -38,7 +38,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var pointOfInterest: PointOfInterest
     private lateinit var pointONMap: Marker
     private var locationPermissionGranted = false
-    lateinit var mFusedLocationClient: FusedLocationProviderClient
+    private lateinit var mFusedLocationClient: FusedLocationProviderClient
     private val TAG = SelectLocationFragment::class.java.simpleName
 
     override fun onCreateView(
@@ -95,7 +95,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     private fun showUserLocation() {
         mFusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-            map.isMyLocationEnabled = true
+            if (locationPermissionGranted)
+                map.isMyLocationEnabled = true
             if (location != null) {
                 val userLatLng = LatLng(location.latitude, location.longitude)
                 val zoom = 20f
@@ -229,6 +230,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                locationPermissionGranted = true
                 showUserLocation()
             } else {
                 _viewModel.showErrorMessage.postValue(getString(R.string.permission_denied_explanation))

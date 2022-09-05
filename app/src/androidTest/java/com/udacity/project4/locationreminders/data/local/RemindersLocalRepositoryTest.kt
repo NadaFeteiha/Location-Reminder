@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
+import com.udacity.project4.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
 import com.udacity.project4.utils.DataBindingIdlingResource
@@ -30,16 +31,12 @@ class RemindersLocalRepositoryTest {
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
 
+    @get:Rule
+    var mainCoroutineRule = MainCoroutineRule()
+
     private lateinit var remindersLocalRepository: RemindersLocalRepository
     private lateinit var database: RemindersDatabase
 
-    private val dataBindingIdlingResource = DataBindingIdlingResource()
-
-    @Before
-    fun registerIdlingResource() {
-        IdlingRegistry.getInstance().register(EspressoIdlingResource.countingIdlingResource)
-        IdlingRegistry.getInstance().register(dataBindingIdlingResource)
-    }
 
     @Before
     fun initRepository() {
@@ -63,37 +60,26 @@ class RemindersLocalRepositoryTest {
     )
 
     @Test
-    fun getReminders() = runBlockingTest {
+    fun getReminders() = mainCoroutineRule.runBlockingTest {
+       //GIVEN: we have multiple reminder
         val reminderList = listOf(
             setFakeData(1),
             setFakeData(2)
         )
-
         reminderList.forEach {
             remindersLocalRepository.saveReminder(it)
         }
+
+        //WHEN: want to get this reminders
         val result = remindersLocalRepository.getReminders()
-        var loaded: List<ReminderDTO> = listOf()
-        if (result is Result.Success<*>) {
-            val dataList = ArrayList<ReminderDTO>()
-            dataList.addAll((result.data as List<ReminderDTO>).map { reminder ->
-                ReminderDTO(
-                    reminder.title,
-                    reminder.description,
-                    reminder.location,
-                    reminder.latitude,
-                    reminder.longitude,
-                    reminder.id
-                )
-            })
-            loaded = dataList
-        }
-        assertThat(loaded, `is`(reminderList))
+        result as Result.Success
+        //THEN: we should get the same data.
+        assertThat(result.data.size, `is`(2))
     }
 
 
     @Test
-    fun deleteAllReminders() = runBlockingTest {
+    fun deleteAllReminders() = mainCoroutineRule.runBlockingTest {
         //GIVEN: a reminder saved in Database
         val reminderFake = setFakeData(1)
         remindersLocalRepository.saveReminder(reminderFake)
@@ -106,20 +92,14 @@ class RemindersLocalRepositoryTest {
     }
 
     @Test
-    fun getReminder_returnsError() = runBlockingTest {
+    fun getReminder_returnsError() = mainCoroutineRule.runBlockingTest {
         //GIVEN: delete all reminders
         remindersLocalRepository.deleteAllReminders()
         //WHEN: try to get reminders.
-        val result = remindersLocalRepository.getReminders()
+        val result = remindersLocalRepository.getReminder(setFakeData(1).id)
         result as Result.Error
         //THEN: got error result massed
         assertThat(result.message, `is`("Reminder not found!"))
-    }
-
-    @After
-    fun unregisterIdlingResource() {
-        IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
-        IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
     }
 
     @After
